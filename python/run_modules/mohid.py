@@ -113,6 +113,7 @@ def change_model_dat(yaml, model):
     static.logger.info("Changed END of " + str(file_path) + " to " +
                         common.file_modifier.date_to_mohid_date(cfg.current_final_date))
     common.file_modifier.modify_line(file, "DT", str(model['dt']))
+    common.file_modifier.modify_line(file, "OPENMP_NUM_THREADS", str(yaml['mohid']['openmpThreads']))
     if 'mohid.dat' in keys:
         for key in model['mohid.dat'].keys():
             common.file_modifier.modify_line(file, key, model['mohid.dat'][key])
