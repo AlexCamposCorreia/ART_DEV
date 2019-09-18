@@ -51,7 +51,7 @@ def run_mohid(yaml):
         static.logger.info("Starting MOHID MPI")
         #cwd is the working directory where the command will execute. stdout is the output file of the command
         subprocess.run(["mpiexec", "-np", str(yaml['mohid']['mpi']['totalProcessors']), "-f", "/opt/hosts",
-                        yaml['mohid']['exePath']], cwd=os.path.dirname(yaml['mohid']['exePath']), 
+                        yaml['mohid']['exePath']], cwd=os.path.dirname(yaml['mohid']['treePath']), 
                         stdout=output_file)
         output_file.close()
 
