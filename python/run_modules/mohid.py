@@ -170,7 +170,7 @@ def gather_boundary_conditions(yaml, model):
             obc_initial_date_str = obc_initial_date.strftime(date_format)
             obc_final_date_str = obc_final_date.strftime(date_format)
 
-            workpath = model['obc']['workpath']
+            workpath = model['obc']['workPath']
 
             '''
             if 'hasSolutionFromFile' it needs to get the OBC files from a "parent" model, and needs to follow the structure
@@ -190,14 +190,13 @@ def gather_boundary_conditions(yaml, model):
 
                 for file in model['obc']['files']:
                     file_source = folder_source + file + "." + file_type
-
                     if os.path.isfile(file_source):
-                        dest_folder = yaml['artconfig']['mainPath'] + folder_label + model['name'] 
+                        dest_folder = yaml['artconfig']['mainPath'] + folder_label + model['name'] + "/"
                         if not os.path.isdir(dest_folder):
                             os.makedirs(dest_folder)
-                            file_destination = dest_folder + file + "." + file_type
-                            copy(file_source, file_destination)
-                            static.logger.info("Copying OBC from " + file_source + " to " + file_destination)
+                        file_destination = dest_folder + file + "." + file_type
+                        copy(file_source, file_destination)
+                        static.logger.info("Copying OBC from " + file_source + " to " + file_destination)
             else:
                 '''
                 subFolders within the workpath for the OBC files. They can be subdivided with year, month and year.
@@ -216,12 +215,12 @@ def gather_boundary_conditions(yaml, model):
                         filename = create_file_name_with_date(file, obc_initial_date, obc_final_date)
                         file_source = workpath +  filename + "." + file_type
                         if os.path.isfile(file_source):
-                            dest_folder = yaml['artconfig']['mainPath'] + folder_label + model['name'] 
+                            dest_folder = yaml['artconfig']['mainPath'] + folder_label + model['name'] + "/"
                             if not os.path.isdir(dest_folder):
                                 os.makedirs(dest_folder)
-                                file_destination = dest_folder + filename + "." + file_type
-                                copy(file_source, file_destination)
-                                static.logger.info("Copying OBC from " + file_source + " to " + file_destination)
+                            file_destination = dest_folder + filename + "." + file_type
+                            copy(file_source, file_destination)
+                            static.logger.info("Copying OBC from " + file_source + " to " + file_destination)
 
 
 def get_meteo_file(yaml, model):
@@ -475,7 +474,7 @@ def process_models(yaml):
                 yaml['mohid']['models'][model]['discharges'].keys() and \
                 yaml['mohid']['models'][model]['discharges']['enable']:
             gather_discharges_files(yaml, yaml['mohid']['models'][model])
-    #run_mohid(yaml)
+    run_mohid(yaml)
     backup_simulation(yaml)
 
 
