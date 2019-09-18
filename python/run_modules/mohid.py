@@ -42,7 +42,10 @@ def verify_run(filename, messages):
 
 
 def run_mohid(yaml):
-    output_file_name = "MOHID_RUN_" + cfg.current_initial_date.strftime("%Y-%m-%d") + ".log"
+    if yaml['mohid']['logPath']:
+        output_file_name = yaml['mohid']['logPath'] + "MOHID_RUN_" + cfg.current_initial_date.strftime("%Y-%m-%d") + ".log"
+    else:
+        output_file_name = "MOHID_RUN_" + cfg.current_initial_date.strftime("%Y-%m-%d") + ".log"
     output_file = open(output_file_name, "w+")
     if 'mpi' in yaml['mohid'].keys() and yaml['mohid']['mpi']['enable']:
         static.logger.info("Starting MOHID MPI")
