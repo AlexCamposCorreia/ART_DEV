@@ -35,8 +35,8 @@ def execute(yaml):
         run_array = [block_dict['exePath']] + flags_array
 
         if 'outputToFile' in block_keys and block_dict['outputToFile']:
-          with open(block_dict['outputFilePath'], 'w') as log:
-            subprocess.run(run_array, stdout=log, cwd=block_dict['workingDirectory'])
+          with open(block_dict['outputFilePath'], 'a') as log:
+            subprocess.run(run_array, stdout=log, stderr=log, cwd=block_dict['workingDirectory'])
             log.close()
         else:
           subprocess.run(run_array, cwd=block_dict['workingDirectory'])
@@ -44,9 +44,9 @@ def execute(yaml):
       #First argument of subprocess.run can be just the command/path to executable as there is no need for a list.
       else:
         if 'outputToFile' in block_keys and block_dict['outputToFile']:
-         with open(block_dict['outputFilePath'], 'w') as log:
+         with open(block_dict['outputFilePath'], 'a') as log:
             static.logger.info("Executing Pre Processing module: " +  block_dict['exePath'])
-            subprocess.run(block_dict['exePath'], stdout=log, cwd=block_dict['workingDirectory'])
+            subprocess.run(block_dict['exePath'], stdout=log, stderr=log, cwd=block_dict['workingDirectory'])
             log.close()
         else:
           static.logger.info("Executing Pre Processing module: " +  block_dict['exePath'])

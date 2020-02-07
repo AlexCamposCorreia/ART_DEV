@@ -42,17 +42,14 @@ def verify_run(filename, messages):
 
 
 def run_mohid(yaml):
-    if yaml['mohid']['logPath']:
-        output_file_name = yaml['mohid']['logPath'] + "MOHID_RUN_" + cfg.current_initial_date.strftime("%Y-%m-%d") + ".log"
-    else:
-        output_file_name = "MOHID_RUN_" + cfg.current_initial_date.strftime("%Y-%m-%d") + ".log"
+    output_file_name = yaml['mohid']['logPath'] + "MOHID_RUN_" + cfg.current_initial_date.strftime("%Y-%m-%d") + ".log"
     output_file = open(output_file_name, "w+")
     if 'mpi' in yaml['mohid'].keys() and yaml['mohid']['mpi']['enable']:
         static.logger.info("Starting MOHID MPI")
         #cwd is the working directory where the command will execute. stdout is the output file of the command
         subprocess.run(["mpiexec", "-np", str(yaml['mohid']['mpi']['totalProcessors']), "-f", "/opt/hosts",
                         yaml['mohid']['exePath']], cwd=os.path.dirname(yaml['mohid']['treePath']), 
-                        stdout=output_file)
+                        stdout=output_file, stderr=output_file)
         output_file.close()
 
         #Mohid alwyas writes these strings in the last lines of the logs. We use it to verify that run was successful
@@ -66,7 +63,7 @@ def run_mohid(yaml):
         #DDC is ran when an MPI run is done to join all the results into a single one.
         ddc_output_filename = "DDC_" + cfg.current_initial_date.strftime("%Y-%m-%d") + ".log"
         mohid_ddc_output_log = open(ddc_output_filename, "w+")
-        subprocess.run("./MohidDDC.exe", cwd=os.path.dirname(yaml['mohid']['treePath']), stdout=mohid_ddc_output_log)
+        subprocess.run("./MohidDDC.exe", cwd=os.path.dirname(yaml['mohid']['treePath']), stdout=mohid_ddc_output_log, stderr=mohid_ddc_output_log)
         mohid_ddc_output_log.close()
         if not verify_run(ddc_output_filename, ["Program MohidDDC successfully terminated"]):
             static.logger.info("MohidDDC NOT SUCCESSFUL")
@@ -77,7 +74,7 @@ def run_mohid(yaml):
         static.logger.info("Starting MOHID run")
         #cwd is the working directory where the command will execute. stdout is the output file of the command
         subprocess.run(yaml['mohid']['exePath'], cwd=os.path.dirname(yaml['mohid']['treePath']), 
-        stdout=output_file)
+        stdout=output_file, stderr=output_file)
         output_file.close()
     
         if not verify_run(output_file_name, ['Program Mohid Water successfully terminated', 
@@ -194,11 +191,12 @@ def gather_boundary_conditions(yaml, model):
 
                 for file in model['obc']['files']:
                     file_source = folder_source + file + "." + file_type
+
                     if os.path.isfile(file_source):
-                        dest_folder = yaml['artconfig']['mainPath'] + folder_label + model['name'] + "/"
+                        dest_folder = yaml['artconfig']['mainPath'] + folder_label + model['name'] 
                         if not os.path.isdir(dest_folder):
                             os.makedirs(dest_folder)
-                        file_destination = dest_folder + file + "." + file_type
+                        file_destination = dest_folder +'/'+ file + "." + file_type
                         copy(file_source, file_destination)
                         static.logger.info("Copying OBC from " + file_source + " to " + file_destination)
             else:
@@ -219,78 +217,81 @@ def gather_boundary_conditions(yaml, model):
                         filename = create_file_name_with_date(file, obc_initial_date, obc_final_date)
                         file_source = workpath +  filename + "." + file_type
                         if os.path.isfile(file_source):
-                            dest_folder = yaml['artconfig']['mainPath'] + folder_label + model['name'] + "/"
+                            dest_folder = yaml['artconfig']['mainPath'] + folder_label + model['name'] 
                             if not os.path.isdir(dest_folder):
                                 os.makedirs(dest_folder)
-                            file_destination = dest_folder + filename + "." + file_type
-                            copy(file_source, file_destination)
-                            static.logger.info("Copying OBC from " + file_source + " to " + file_destination)
+                                file_destination = dest_folder + filename + "." + file_type
+                                copy(file_source, file_destination)
+                                static.logger.info("Copying OBC from " + file_source + " to " + file_destination)
 
 
 def get_meteo_file(yaml, model):
     model_keys = model.keys()
     if 'meteo' in model_keys and model['meteo']['enable']:
-        static.logger.info("Gathering Meteo Files")
-               
-        meteo_models_keys = model['meteo']['models'].keys()
+    
+        try:
+            static.logger.info("Gathering Meteo Files")
+                   
+            meteo_models_keys = model['meteo']['models'].keys()
+            print(meteo_models_keys)
 
-        for meteo_model in meteo_models_keys:
-            meteo_keys = model['meteo']['models'][meteo_model].keys()
+            for meteo_model in meteo_models_keys:
+                meteo_keys = model['meteo']['models'][meteo_model].keys()
+                print(meteo_model)
 
-            date_format = "%Y-%m-%d"
-            if 'dateFormat' in meteo_keys:
-                date_format = model['meteo'][meteo_model]['dateFormat']
+                date_format = "%Y-%m-%d"
+                if 'dateFormat' in meteo_keys:
+                    date_format = model['meteo'][meteo_model]['dateFormat']
 
-            meteo_initial_date = cfg.current_initial_date.strftime(date_format)
-            if 'simulatedDays' in meteo_keys:
-                meteo_final_date = cfg.current_initial_date + datetime.timedelta(days=model['meteo']['models']
-                    [meteo_model]['simulatedDays'])
-                meteo_final_date = meteo_final_date.strftime(date_format)
-            else:
-                meteo_final_date = cfg.current_final_date.strftime(date_format)
+                meteo_initial_date = cfg.current_initial_date.strftime(date_format)
+                if 'simulatedDays' in meteo_keys:
+                    meteo_final_date = cfg.current_initial_date + datetime.timedelta(days=model['meteo']['models']
+                        [meteo_model]['simulatedDays'])
+                    meteo_final_date = meteo_final_date.strftime(date_format)
+                else:
+                    meteo_final_date = cfg.current_final_date.strftime(date_format)
 
-            static.logger.info("Meteo Initial Date: " + meteo_initial_date)
-            static.logger.info("Meteo Final Date: " + meteo_final_date)
+                static.logger.info("Meteo Initial Date: " + meteo_initial_date)
+                static.logger.info("Meteo Final Date: " + meteo_final_date)
 
-            file_type = "hdf5"
-            if 'fileType' in meteo_keys:
-                file_type = model['meteo']['models'][meteo_model]['fileType']
+                file_type = "hdf5"
+                if 'fileType' in meteo_keys:
+                    file_type = model['meteo']['models'][meteo_model]['fileType']
 
-            if 'fileNameFromModel' in meteo_keys and model['meteo']['models'][meteo_model]['fileNameFromModel']:
-                static.logger.info("Meteo: fileNameFromModel flag enabled")
+                if 'fileNameFromModel' in meteo_keys and model['meteo']['models'][meteo_model]['fileNameFromModel']:
+                    static.logger.info("Meteo: fileNameFromModel flag enabled")
 
-                meteo_sufix = model['meteo']['models'][meteo_model]['name']
-                static.logger.info("Meteo sufix: " + meteo_sufix)
-                meteo_file_source = model['meteo']['models'][meteo_model]['workPath'] + \
-                    model['meteo']['models'][meteo_model]['name'] + "_" + model['name'] + "_" + meteo_initial_date +\
-                    "_" + meteo_final_date + "." + file_type
-                static.logger.info("Meteo Source File: " + meteo_file_source)
-            else:
-                meteo_file_source = model['meteo']['models'][meteo_model][
-                                        'workPath'] + "meteo" + "_" + meteo_initial_date \
-                                    + "_" + meteo_final_date + "." + file_type
-                static.logger.info("Meteo Source File: " + meteo_file_source)
+                    meteo_sufix = model['meteo']['models'][meteo_model]['name']
+                    static.logger.info("Meteo sufix: " + meteo_sufix)
+                    meteo_file_source = model['meteo']['models'][meteo_model]['workPath'] + \
+                        model['meteo']['models'][meteo_model]['name'] + "_" + model['name'] + "_" + meteo_initial_date +\
+                        "_" + meteo_final_date + "." + file_type
+                    static.logger.info("Meteo Source File: " + meteo_file_source)
+                else:
+                    meteo_file_source = model['meteo']['models'][meteo_model][
+                                            'workPath'] + "meteo" + "_" + meteo_initial_date \
+                                        + "_" + meteo_final_date + "." + file_type
+                    static.logger.info("Meteo Source File: " + meteo_file_source)
 
-            if os.path.isfile(meteo_file_source):
-                meteo_file_dest_folder = yaml['artconfig']['mainPath'] + "GeneralData/BoundaryConditions/Atmosphere/" \
-                    + model['name'] + "/" + model['meteo']['models'][meteo_model]['name'] + "/"
+                if os.path.isfile(meteo_file_source):
+                    meteo_file_dest_folder = yaml['artconfig']['mainPath'] + "GeneralData/BoundaryConditions/Atmosphere/" \
+                        + model['name'] + "/" + model['meteo']['models'][meteo_model]['name'] + "/"
 
-                if not os.path.isdir(meteo_file_dest_folder):
-                    os.makedirs(meteo_file_dest_folder)
+                    if not os.path.isdir(meteo_file_dest_folder):
+                        os.makedirs(meteo_file_dest_folder)
 
-                meteo_file_dest = meteo_file_dest_folder + model['meteo']['models'][meteo_model]['name'] + "_" + \
-                    model['name'] + "." + file_type
-                static.logger.info("Meteo Destination File: " + meteo_file_dest)
+                    meteo_file_dest = meteo_file_dest_folder + model['meteo']['models'][meteo_model]['name'] + "_" + \
+                        model['name'] + "." + file_type
+                    static.logger.info("Meteo Destination File: " + meteo_file_dest)
 
-                copy(meteo_file_source, meteo_file_dest)
-                static.logger.info("Copied meteo file from " + meteo_file_source + " to " + meteo_file_dest)
-                return
-            else:
-                continue
-
-        static.logger.info("get_meteo_file: Meteo file could not be found. Check yaml file for configuration errors.")
-        raise FileNotFoundError("get_meteo_file: Meteo file could not be found. Check yaml file for configuration " +
-                                "errors.")
+                    copy(meteo_file_source, meteo_file_dest)
+                    static.logger.info("Copied meteo file from " + meteo_file_source + " to " + meteo_file_dest)
+                else:
+                    continue
+        except:
+            static.logger.info("get_meteo_file: Meteo file could not be found. Check yaml file for configuration errors.")
+            raise FileNotFoundError("get_meteo_file: Meteo file could not be found. Check yaml file for configuration " +
+                                    "errors.")
 
 
 '''
