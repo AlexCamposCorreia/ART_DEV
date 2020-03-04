@@ -36,7 +36,8 @@ def main():
         wrf.execute(yaml)
     else:
         raise ValueError("No valid simulation module given.")
-        
+    
+    static.logger.info("------------- ART RUN FINISHED -------------")
     print("------------- ART RUN FINISHED -------------")
 
 
