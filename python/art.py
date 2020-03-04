@@ -5,6 +5,7 @@ import run_modules.wrf as wrf
 
 import common.constants as static
 import common.config as cfg
+import common.logger
 import datetime
 import os.path
 import sys
@@ -16,7 +17,6 @@ def validate_path(path):
 
 def main():
 
-
     yaml = yaml_lib.open_yaml_file(sys.argv[1])
 
     #yaml_lib.validate_yaml_file(yaml)
@@ -24,6 +24,14 @@ def main():
     validate_path(yaml['artconfig']['mainPath'])
 
     artconfig_keys = yaml['artconfig'].keys()
+
+    # ALEX
+    global static
+    if 'logFileName' in artconfig_keys:
+        static.logger = common.logger.ArtLogger("MOHID", yaml['artconfig']['logFileName'])
+    else:
+        static.logger = common.logger.ArtLogger("MOHID", "log.txt")
+
 
     running_mode(yaml)
             
